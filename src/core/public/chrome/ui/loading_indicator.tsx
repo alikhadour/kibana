@@ -6,7 +6,7 @@
  * Side Public License, v 1.
  */
 
-import { EuiLoadingSpinner, EuiProgress, EuiIcon } from '@elastic/eui';
+import { EuiLoadingSpinner, EuiProgress } from '@elastic/eui';
 import { i18n } from '@kbn/i18n';
 import React from 'react';
 import classNames from 'classnames';
