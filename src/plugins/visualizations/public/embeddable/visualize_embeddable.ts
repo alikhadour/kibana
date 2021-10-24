@@ -234,9 +234,9 @@ export class VisualizeEmbeddable
     localStorage.setItem('title', title);
     localStorage.setItem('request', request);
     localStorage.setItem('columns', columns);
-    // history.push({
-    //   pathname: '/app/scheduledReports/create',
-    // });
+    history.push({
+      pathname: '/app/scheduledReports/create',
+    });
   };
 
   /**
