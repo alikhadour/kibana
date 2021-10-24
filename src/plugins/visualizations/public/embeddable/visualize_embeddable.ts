@@ -17,6 +17,7 @@ import {
   esFilters,
   Filter,
   TimefilterContract,
+  AggConfig,
 } from '../../../../plugins/data/public';
 import {
   EmbeddableInput,
@@ -191,7 +192,7 @@ export class VisualizeEmbeddable
     });
   };
 
-  public getColumns = (aggs: string | any[]) => {
+  public getColumns = (aggs: AggConfig[] | undefined) => {
     if (!aggs) return [];
     let columns = [];
     for (let i = 0; i < aggs.length; i++) {
@@ -223,7 +224,10 @@ export class VisualizeEmbeddable
     const history = createBrowserHistory({ forceRefresh: true });
 
     const title = this.getTitle();
-    const columns = JSON.stringify(this.getColumns(this.vis?.data?.aggs?.aggs));
+    let columns: string | undefined = '[]';
+    if (!this.vis?.data?.aggs?.aggs)
+      columns = JSON.stringify(this.getColumns(this.vis?.data?.aggs?.aggs));
+
     const request = JSON.stringify(adapters.requests?.getRequests()[0].json);
     const href = window.location.href;
     const id = href.split('#')[1].split('/')[2].split('?')[0];
