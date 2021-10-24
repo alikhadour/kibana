@@ -191,7 +191,7 @@ export class VisualizeEmbeddable
     });
   };
 
-  public getColumns = (aggs) => {
+  public getColumns = (aggs: string | any[]) => {
     if (!aggs) return [];
     let columns = [];
     for (let i = 0; i < aggs.length; i++) {
