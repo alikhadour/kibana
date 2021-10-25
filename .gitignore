@@ -39,7 +39,7 @@ target
 
 /html_docs
 .eslintcache
-# /plugins/
+/plugins/
 /data
 disabledPlugins
 webpackstats.json
