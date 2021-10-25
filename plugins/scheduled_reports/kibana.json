@@ -1,9 +1,0 @@
-{
-  "id": "scheduledReports",
-  "version": "1.0.0",
-  "kibanaVersion": "kibana",
-  "server": true,
-  "ui": true,
-  "requiredPlugins": ["navigation", "security"],
-  "optionalPlugins": []
-}
