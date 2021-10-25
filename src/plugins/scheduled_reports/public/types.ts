@@ -1,4 +1,4 @@
-import { NavigationPublicPluginStart } from '....\navigationpublic';
+import { NavigationPublicPluginStart } from '../../navigation/public';
 
 export interface ScheduledReportsPluginSetup {
   getGreeting: () => string;

@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { AppMountParameters, CoreStart } from '......corepublic';
+import { AppMountParameters, CoreStart } from '../../../core/public';
 import { AppPluginStartDependencies } from './types';
 import { ScheduledReportsApp } from './components/app';
 

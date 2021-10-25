@@ -1,5 +1,5 @@
 import { i18n } from '@kbn/i18n';
-import { AppMountParameters, CoreSetup, CoreStart, Plugin } from '......corepublic';
+import { AppMountParameters, CoreSetup, CoreStart, Plugin } from '../../../core/public';
 import {
   ScheduledReportsPluginSetup,
   ScheduledReportsPluginStart,

@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { i18n } from '@kbn/i18n';
+import React, { useEffect, useRef, useState } from 'react';
 import { FormattedMessage, I18nProvider } from '@kbn/i18n/react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 
 import {
   EuiButton,
@@ -14,12 +13,20 @@ import {
   EuiPageHeader,
   EuiTitle,
   EuiText,
+  EuiFieldNumber,
+  EuiFlexGroup,
+  EuiFlexItem,
+  EuiFormControlLayout,
+  EuiFormLabel,
+  EuiFormRow,
+  EuiSelect,
+  EuiSpacer,
 } from '@elastic/eui';
+import Swal from 'sweetalert2';
 
-import { CoreStart } from '........corepublic';
-import { NavigationPublicPluginStart } from '......\navigationpublic';
-
-import { PLUGIN_ID, PLUGIN_NAME } from '../../common';
+import { CoreStart } from '../../../../core/public';
+import { NavigationPublicPluginStart } from '../../../navigation/public';
+import DataTable from './SchedulesTable';
 
 interface ScheduledReportsAppDeps {
   basename: string;
@@ -34,85 +41,260 @@ export const ScheduledReportsApp = ({
   http,
   navigation,
 }: ScheduledReportsAppDeps) => {
-  // Use React hooks to manage state.
-  const [timestamp, setTimestamp] = useState<string | undefined>();
+  const options = [
+    { value: 'second', text: 'Seconds' },
+    { value: 'hour', text: 'Hours' },
+    { value: 'day', text: 'Days' },
+    { value: 'month', text: 'Months' },
+  ];
+
+  const timeFilterOptions = [
+    { value: 'hour', text: 'Hours' },
+    { value: 'day', text: 'Days' },
+    { value: 'month', text: 'Months' },
+  ];
+  const [duration, setDuration] = useState(1);
+  const [timeFilter, setTimeFilter] = useState(1);
+  const [selectedValue, setSelectedValue] = useState(options[2].value);
+  const [timeFilterselectedValue, setTimeFilterSelectedValue] = useState(options[2].value);
+  const [receiver, setReceiver] = useState('');
+
+  const index = localStorage.getItem('index');
+  // localStorage.removeItem('index');
+  const id = localStorage.getItem('id');
+  // localStorage.removeItem('id');
+  const title = localStorage.getItem('title');
+  // localStorage.removeItem('title');
+  const request = localStorage.getItem('request');
+  // localStorage.removeItem('request');
+  const columns = localStorage.getItem('columns');
+
+  // const [page, setPage] = useState(id ? 'form' : 'list');
+  const onChangeSelect = (e: { target: { value: React.SetStateAction<string> } }) => {
+    setSelectedValue(e.target.value);
+  };
+  const onChangeTimeFilter = (e) => {
+    setTimeFilter(e.target.value);
+  };
+
+  const onChangeTimeFilterOption = (e: { target: { value: React.SetStateAction<string> } }) => {
+    setTimeFilterSelectedValue(e.target.value);
+  };
+
+  const onChangeDuration = (e: { target: { value: React.SetStateAction<number> } }) => {
+    setDuration(e.target.value);
+  };
+
+  const onChangeReceiver = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setReceiver(e.target.value);
+  };
 
   const onClickHandler = () => {
-    // Use the core http service to make a response to the server API.
-    http.get('/api/scheduled_reports/example').then((res) => {
-      setTimestamp(res.time);
-      // Use the core notifications service to display a success message.
-      notifications.toasts.addSuccess(
-        i18n.translate('scheduledReports.dataUpdated', {
-          defaultMessage: 'Data updated',
-        })
-      );
+    setIsSaving(true);
+    console.log(columns);
+    const requestOptions = {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'kbn-xsrf': 'reporting' },
+      body: JSON.stringify({
+        index: index,
+        visualizationId: id,
+        title,
+        request,
+        duration,
+        durationUnit: selectedValue,
+        receiver,
+        timeFilter,
+        timeFilterUnit: timeFilterselectedValue,
+        columns,
+      }),
+    };
+    fetch('/api/scheduled_reports/create', requestOptions).then((response) => {
+      if (response.ok) {
+        Swal.fire(
+          'Success!',
+          'Your scheduled report has been created successfully.',
+          'success'
+        ).then(function () {
+          window.location.href = '../scheduledReports/';
+        });
+      } else {
+        setIsSaving(false);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Something went wrong, please try again!',
+        });
+      }
     });
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   // Render the application DOM.
-  // Note that `navigation.ui.TopNavMenu` is a stateful component exported on the `navigation` plugin's start contract.
   return (
     <Router basename={basename}>
       <I18nProvider>
-        <>
-          <navigation.ui.TopNavMenu
-            appName={PLUGIN_ID}
-            showSearchBar={true}
-            useDefaultBehaviors={true}
-          />
-          <EuiPage restrictWidth="1000px">
-            <EuiPageBody>
-              <EuiPageHeader>
-                <EuiTitle size="l">
-                  <h1>
-                    <FormattedMessage
-                      id="scheduledReports.helloWorldText"
-                      defaultMessage="{name}"
-                      values={{ name: PLUGIN_NAME }}
-                    />
-                  </h1>
-                </EuiTitle>
-              </EuiPageHeader>
-              <EuiPageContent>
-                <EuiPageContentHeader>
-                  <EuiTitle>
-                    <h2>
-                      <FormattedMessage
-                        id="scheduledReports.congratulationsTitle"
-                        defaultMessage="Congratulations, you have successfully created a new Kibana Plugin!"
-                      />
-                    </h2>
-                  </EuiTitle>
-                </EuiPageContentHeader>
-                <EuiPageContentBody>
-                  <EuiText>
-                    <p>
-                      <FormattedMessage
-                        id="scheduledReports.content"
-                        defaultMessage="Look through the generated code and check out the plugin development documentation."
-                      />
-                    </p>
-                    <EuiHorizontalRule />
-                    <p>
-                      <FormattedMessage
-                        id="scheduledReports.timestampText"
-                        defaultMessage="Last timestamp: {time}"
-                        values={{ time: timestamp ? timestamp : 'Unknown' }}
-                      />
-                    </p>
-                    <EuiButton type="primary" size="s" onClick={onClickHandler}>
-                      <FormattedMessage
-                        id="scheduledReports.buttonText"
-                        defaultMessage="Get data"
-                      />
-                    </EuiButton>
-                  </EuiText>
-                </EuiPageContentBody>
-              </EuiPageContent>
-            </EuiPageBody>
-          </EuiPage>
-        </>
+        <EuiPage restrictWidth="1000px">
+          <EuiPageBody>
+            <EuiPageHeader>
+              <EuiTitle size="l">
+                <h1>
+                  <FormattedMessage
+                    id="reportScheduler.helloWorldText"
+                    defaultMessage="{name}"
+                    values={{ name: 'Sceduled Reports' }}
+                  />
+                </h1>
+              </EuiTitle>
+            </EuiPageHeader>
+            <Switch>
+              <Route path="/create">
+                <EuiPageContent>
+                  <EuiPageContentHeader>
+                    <EuiTitle>
+                      <h2>
+                        <FormattedMessage
+                          id="reportScheduler.congratulationsTitle"
+                          defaultMessage="Fill the fileds with the required data to start scheduling!"
+                        />
+                      </h2>
+                    </EuiTitle>
+                  </EuiPageContentHeader>
+                  <EuiPageContentBody>
+                    <EuiText>
+                      <EuiHorizontalRule />
+                      <EuiFormControlLayout
+                        readOnly
+                        prepend={<EuiFormLabel htmlFor="title">Visualization Name</EuiFormLabel>}
+                      >
+                        <input
+                          type="text"
+                          className="euiFieldText euiFieldText--inGroup"
+                          id="title"
+                          value={title?.toString()}
+                          readOnly
+                        />
+                      </EuiFormControlLayout>
+                      <EuiSpacer size="m" />
+                      <EuiFormControlLayout
+                        readOnly
+                        prepend={<EuiFormLabel htmlFor="reciever">Receiver Email</EuiFormLabel>}
+                      >
+                        <input
+                          type="email"
+                          className="euiFieldText euiFieldText--inGroup"
+                          id="reciever"
+                          placeholder="ex: mail@domain.com"
+                          onChange={(e) => onChangeReceiver(e)}
+                        />
+                      </EuiFormControlLayout>
+                      <EuiSpacer size="m" />
+                      <EuiFlexGroup style={{ maxWidth: 600 }}>
+                        <EuiFlexItem>
+                          <EuiFormRow>
+                            <EuiFormControlLayout
+                              readOnly
+                              prepend={<EuiFormLabel htmlFor="period">Report Every</EuiFormLabel>}
+                            >
+                              <EuiFieldNumber
+                                placeholder="Enter the value of the duration"
+                                value={duration}
+                                onChange={(e: any) => onChangeDuration(e)}
+                                aria-label="Use aria labels when no actual label is in use"
+                              />
+                            </EuiFormControlLayout>
+                          </EuiFormRow>
+                        </EuiFlexItem>
+                        <EuiFlexItem grow={false} style={{ width: 120 }}>
+                          <EuiFormRow>
+                            <EuiSelect
+                              id="selectDocExample"
+                              options={options}
+                              value={selectedValue}
+                              onChange={(e: { target: { value: React.SetStateAction<string> } }) =>
+                                onChangeSelect(e)
+                              }
+                              aria-label="Use aria labels when no actual label is in use"
+                            />
+                          </EuiFormRow>
+                        </EuiFlexItem>
+                      </EuiFlexGroup>
+                      <EuiSpacer size="m" />
+                      <EuiFlexGroup style={{ maxWidth: 600 }}>
+                        <EuiFlexItem>
+                          <EuiFormRow>
+                            <EuiFormControlLayout
+                              readOnly
+                              prepend={
+                                <EuiFormLabel htmlFor="period">Retrive data from last</EuiFormLabel>
+                              }
+                            >
+                              <EuiFieldNumber
+                                placeholder="Enter the value of Time Filter"
+                                value={timeFilter}
+                                onChange={(e) => onChangeTimeFilter(e)}
+                                aria-label="Use aria labels when no actual label is in use"
+                              />
+                            </EuiFormControlLayout>
+                          </EuiFormRow>
+                        </EuiFlexItem>
+                        <EuiFlexItem grow={false} style={{ width: 120 }}>
+                          <EuiFormRow>
+                            <EuiSelect
+                              id="selectDocExample"
+                              options={timeFilterOptions}
+                              value={timeFilterselectedValue}
+                              onChange={(e: { target: { value: React.SetStateAction<string> } }) =>
+                                onChangeTimeFilterOption(e)
+                              }
+                              aria-label="Use aria labels when no actual label is in use"
+                            />
+                          </EuiFormRow>
+                        </EuiFlexItem>
+                      </EuiFlexGroup>
+                      <EuiSpacer size="m" />
+                      <EuiButton
+                        type="primary"
+                        size="s"
+                        onClick={onClickHandler}
+                        isLoading={isSaving}
+                      >
+                        <FormattedMessage
+                          id="reportScheduler.buttonText"
+                          defaultMessage="Create Report Scheduler"
+                        />
+                      </EuiButton>
+                    </EuiText>
+                  </EuiPageContentBody>
+                </EuiPageContent>
+              </Route>
+              <Route path="/">
+                <EuiPageContent>
+                  <EuiPageContentHeader>
+                    <EuiTitle>
+                      <h2>
+                        <FormattedMessage
+                          id="reportScheduler.congratulationsTitle"
+                          defaultMessage="Preview and control your scheduled reports!"
+                        />
+                      </h2>
+                    </EuiTitle>
+                  </EuiPageContentHeader>
+                  <EuiPageContentBody>
+                    <EuiText>
+                      <EuiHorizontalRule />
+                      <DataTable
+                        notifications={notifications}
+                        // scheduledReports={scheduledReports}
+                        // deleteAction={removeScheduledReport}
+                      ></DataTable>
+                    </EuiText>
+                  </EuiPageContentBody>
+                </EuiPageContent>
+              </Route>
+            </Switch>
+          </EuiPageBody>
+        </EuiPage>
       </I18nProvider>
     </Router>
   );
