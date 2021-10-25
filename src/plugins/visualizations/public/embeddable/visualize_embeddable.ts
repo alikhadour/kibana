@@ -198,7 +198,6 @@ export class VisualizeEmbeddable
     for (let i = 0; i < aggs.length; i++) {
       let key = aggs[i].id.toString();
       let name = aggs[i].params?.customLabel;
-      console.log(this.vis?.data?.aggs?.aggs);
       if (!name) {
         name = aggs[i].params?.field?.spec?.name || '-';
       }
@@ -225,7 +224,7 @@ export class VisualizeEmbeddable
 
     const title = this.getTitle();
     let columns: string | undefined = '[]';
-    if (!this.vis?.data?.aggs?.aggs)
+    if (this.vis?.data?.aggs?.aggs)
       columns = JSON.stringify(this.getColumns(this.vis?.data?.aggs?.aggs));
 
     const request = JSON.stringify(adapters.requests?.getRequests()[0].json);
