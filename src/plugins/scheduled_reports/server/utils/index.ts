@@ -5,6 +5,7 @@ const ExcelJS = require('exceljs');
 const fs = require('fs');
 const path = require('path');
 var nodemailer = require('nodemailer');
+const util = require('util');
 
 export function generateCronExpression(duration: string, unit: string): string {
   if (unit === 'second') {
@@ -199,16 +200,17 @@ export async function start(report: Report, client) {
     const dirPath = 'tmp';
 
     // create directory if not found
-    fs.access(dirPath, fs.F_OK, (err) => {
-      if (err) {
-        fs.mkdirSync('tmp');
-        //   console.error(err);
-        return;
-      }
-    });
+    const makeDir = util.promisify(fs.mkdir);
+    const createDirectory = async (path) => {
+      await makeDir(path).catch((err) => {
+        // If promise gets rejected
+        console.log(`Error occurs, 
+        Error code -> ${err.code},
+        Error No -> ${err.errno}`);
+      });
+    };
 
-    const timeElapsed = Date.now();
-    const today = new Date(timeElapsed);
+    await createDirectory(dirPath);
 
     let uniqueName = uuidv4();
     const filePath = path.join(dirPath, `/${uniqueName}.xlsx`);
