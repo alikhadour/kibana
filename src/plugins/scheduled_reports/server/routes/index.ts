@@ -97,8 +97,8 @@ export function defineRoutes(router: IRouter, schedule: any, { security }: Plugi
       },
     },
     async (context, request, response) => {
-      // let companyId = request.body.index.split('-')[0];
-      let companyId = 'superuser';
+      let companyId = request.body.index.split('-')[0];
+      // let companyId = 'superuser';
       let id = uuidv4();
       // todo:
       // validate input
