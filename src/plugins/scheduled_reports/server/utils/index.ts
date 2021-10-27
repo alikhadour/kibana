@@ -11,9 +11,10 @@ export function generateCronExpression(duration: string, unit: string): string {
   if (unit === 'second') {
     return '*/' + duration + ' * * * * *';
   } else if (unit === 'hour') {
-    return '0 0 0/' + duration + ' 1/1 * *';
+    return '0 0 */' + duration + ' 1/1 * *';
   } else if (unit === 'day') {
-    return ' 0 0 12 1/1 * *';
+    // 0 0 13 */5 * ? *
+    return '0 0 12 */' + duration + ' * *';
   }
   //else if (unit === 'month')
   return '0 0 12 1 1/' + duration + ' *';
@@ -40,6 +41,17 @@ export function getMailContent(reportTitle: string): string {
     '</body>\n' +
     '</html>';
   return content;
+}
+
+export function formatTimestamp(timestamp) {
+  var date = new Date(timestamp);
+  let year = date.getFullYear();
+  let month = date.getMonth();
+  let day = date.getDate();
+  let hour = date.getHours();
+  let minute = date.getMinutes();
+  let second = date.getSeconds();
+  return year + '/' + month + '/' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
 export function getData(object, row: Object[], agg: string, dataList: Object[][]) {
@@ -113,7 +125,6 @@ export async function createExcel(
       }
     }
   }
-
   worksheet.columns = sortedColumns;
 
   dataList.forEach((row) => {
@@ -121,7 +132,11 @@ export async function createExcel(
     for (let i = 0; i < row.length; i++) {
       let jsonObj = JSON.parse(row[i]);
       let key = sortedColumns[i].key;
-      newRow.push(jsonObj[key]);
+      if (sortedColumns[i].type === 'date') {
+        newRow.push(formatTimestamp(jsonObj[key]));
+      } else {
+        newRow.push(jsonObj[key]);
+      }
     }
     worksheet.addRow(newRow);
   });
@@ -141,6 +156,7 @@ export function getColumns(cols) {
     columns.push({
       header: cols[i].name,
       key: cols[i].key,
+      type: cols[i].type,
     });
   }
   return columns;
@@ -180,6 +196,9 @@ export async function start(report: Report, client) {
     } else if (request.query.bool.filter[rangeIdx].range.fireTime) {
       request.query.bool.filter[rangeIdx].range.fireTime.gte = gte;
       request.query.bool.filter[rangeIdx].range.fireTime.lte = lte;
+    } else if (request.query.bool.filter[rangeIdx].range.enterTime) {
+      request.query.bool.filter[rangeIdx].range.enterTime.gte = gte;
+      request.query.bool.filter[rangeIdx].range.enterTime.lte = lte;
     }
 
     let response = await client.transport.request({
@@ -189,7 +208,6 @@ export async function start(report: Report, client) {
     });
 
     let columns = getColumns(JSON.parse(report.columns));
-
     let aggs = response.body.aggregations;
     for (let key in aggs) {
       getData(aggs[key], [], key, dataList);

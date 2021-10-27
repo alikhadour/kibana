@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FormattedMessage, I18nProvider } from '@kbn/i18n/react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-
+import { i18n } from '@kbn/i18n';
 import {
   EuiButton,
   EuiHorizontalRule,
@@ -27,6 +27,9 @@ import Swal from 'sweetalert2';
 import { CoreStart } from '../../../../core/public';
 import { NavigationPublicPluginStart } from '../../../navigation/public';
 import DataTable from './SchedulesTable';
+import { assertLVal } from '@babel/types';
+
+var validator = require('validator');
 
 interface ScheduledReportsAppDeps {
   basename: string;
@@ -89,9 +92,79 @@ export const ScheduledReportsApp = ({
     setReceiver(e.target.value);
   };
 
+  const validateEmail = () => {
+    if (!validator.isEmail(receiver)) {
+      notifications.toasts.addDanger(
+        i18n.translate('scheduledReports.emailError', {
+          defaultMessage: 'Provided receiver email address is either empty or not valid.',
+        })
+      );
+      return false;
+    }
+    return true;
+  };
+  const validateDuration = () => {
+    const tmpDuration = Number(duration);
+    if (!tmpDuration || !Number.isInteger(tmpDuration)) {
+      notifications.toasts.addDanger(
+        i18n.translate('scheduledReports.durationError', {
+          defaultMessage: 'Repeat duration is either empty or not valid.',
+        })
+      );
+      return false;
+    }
+    if (selectedValue == 'second' && (duration > 60 || duration <= 0)) {
+      notifications.toasts.addDanger(
+        i18n.translate('scheduledReports.durationSecondsError', {
+          defaultMessage: 'Repeat duration for seconds must be between 1 and 60.',
+        })
+      );
+      return false;
+    }
+    if (selectedValue == 'hour' && (duration > 24 || duration <= 0)) {
+      notifications.toasts.addDanger(
+        i18n.translate('scheduledReports.durationHoursError', {
+          defaultMessage: 'Repeat duration for hours must be between 1 and 24.',
+        })
+      );
+      return false;
+    }
+    if (selectedValue == 'day' && (duration > 31 || duration <= 0)) {
+      notifications.toasts.addDanger(
+        i18n.translate('scheduledReports.durationDaysError', {
+          defaultMessage: 'Repeat duration for days must be between 1 and 7.',
+        })
+      );
+      return false;
+    }
+    if (selectedValue == 'month' && (duration > 12 || duration <= 0)) {
+      notifications.toasts.addDanger(
+        i18n.translate('scheduledReports.durationMonthsError', {
+          defaultMessage: 'Repeat duration for months must be between 1 and 12.',
+        })
+      );
+      return false;
+    }
+    return true;
+  };
+  const validateTimeFilter = () => {
+    const tmpTimeFilter = Number(timeFilter);
+    if (!tmpTimeFilter || !Number.isInteger(tmpTimeFilter) || tmpTimeFilter <= 0) {
+      notifications.toasts.addDanger(
+        i18n.translate('scheduledReports.TimeFilterError', {
+          defaultMessage: 'Time Filter Field is either empty or not valid.',
+        })
+      );
+      return false;
+    }
+    return true;
+  };
+
   const onClickHandler = () => {
+    if (!(validateEmail() && validateDuration() && validateTimeFilter())) {
+      return;
+    }
     setIsSaving(true);
-    console.log(columns);
     const requestOptions = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'kbn-xsrf': 'reporting' },

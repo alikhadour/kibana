@@ -97,7 +97,8 @@ export function defineRoutes(router: IRouter, schedule: any, { security }: Plugi
       },
     },
     async (context, request, response) => {
-      let companyId = request.body.index.split('-')[0];
+      // let companyId = request.body.index.split('-')[0];
+      let companyId = 'superuser';
       let id = uuidv4();
       // todo:
       // validate input
@@ -172,13 +173,14 @@ export function defineRoutes(router: IRouter, schedule: any, { security }: Plugi
         // stop the scheduler
         schedule.scheduledJobs[request.params.id].cancel();
       } catch (error) {
-        return response.customError({
-          body: {
-            message:
-              'Could not delete the scheduled report. Either it does not exist, or somthing went wrong, please try again!',
-          },
-          statusCode: error.status | 500,
-        });
+        // todo: uncomment the following
+        // return response.customError({
+        //   body: {
+        //     message:
+        //       'Could not delete the scheduled report. Either it does not exist, or somthing went wrong, please try again!',
+        //   },
+        //   statusCode: error.status | 500,
+        // });
       }
 
       try {

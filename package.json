@@ -418,6 +418,7 @@
     "use-resize-observer": "^6.0.0",
     "utility-types": "^3.10.0",
     "uuid": "3.3.2",
+    "validator": "^13.6.0",
     "vega": "^5.19.1",
     "vega-interpreter": "^1.0.4",
     "vega-lite": "^5.0.0",
