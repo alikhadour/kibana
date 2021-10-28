@@ -132,7 +132,7 @@ export const ScheduledReportsApp = ({
     if (selectedValue == 'day' && (duration > 31 || duration <= 0)) {
       notifications.toasts.addDanger(
         i18n.translate('scheduledReports.durationDaysError', {
-          defaultMessage: 'Repeat duration for days must be between 1 and 7.',
+          defaultMessage: 'Repeat duration for days must be between 1 and 31.',
         })
       );
       return false;
