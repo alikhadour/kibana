@@ -102,52 +102,58 @@ export async function createExcel(
   filePath: string,
   columns
 ) {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Safee Tracking';
-  workbook.lastModifiedBy = 'Safee Tracking';
-  workbook.created = new Date();
-  workbook.modified = new Date();
-  workbook.lastPrinted = new Date();
+  try {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Safee Tracking';
+    workbook.lastModifiedBy = 'Safee Tracking';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+    workbook.lastPrinted = new Date();
 
-  const worksheet = workbook.addWorksheet('report');
+    const worksheet = workbook.addWorksheet('report');
 
-  let sortedColumns = [];
-  // get the right sort of the columns from the rows
-  if (dataList.length > 0) {
-    for (let i = 0; i < dataList[0].length; i++) {
-      let tmp = JSON.parse(dataList[0][i]);
-      for (let i in tmp) {
-        for (let j = 0; j < columns.length; j++) {
-          if (i == columns[j].key) {
-            sortedColumns.push(columns[j]);
+    let sortedColumns = [];
+    // get the right sort of the columns from the rows
+    if (dataList.length > 0) {
+      for (let i = 0; i < dataList[0].length; i++) {
+        let tmp = JSON.parse(dataList[0][i]);
+        for (let i in tmp) {
+          for (let j = 0; j < columns.length; j++) {
+            if (i == columns[j].key) {
+              sortedColumns.push(columns[j]);
+            }
           }
         }
       }
     }
-  }
-  worksheet.columns = sortedColumns;
+    worksheet.columns = sortedColumns;
 
-  dataList.forEach((row) => {
-    var newRow: string[] = [];
-    for (let i = 0; i < row.length; i++) {
-      let jsonObj = JSON.parse(row[i]);
-      let key = sortedColumns[i].key;
-      if (sortedColumns[i].type === 'date') {
-        newRow.push(formatTimestamp(jsonObj[key]));
-      } else {
-        newRow.push(jsonObj[key]);
+    dataList.forEach((row) => {
+      var newRow: string[] = [];
+      for (let i = 0; i < row.length; i++) {
+        let jsonObj = JSON.parse(row[i]);
+        let key = sortedColumns[i].key;
+        if (sortedColumns[i].type === 'date') {
+          newRow.push(formatTimestamp(jsonObj[key]));
+        } else {
+          newRow.push(jsonObj[key]);
+        }
       }
-    }
-    worksheet.addRow(newRow);
-  });
+      worksheet.addRow(newRow);
+    });
 
-  worksheet.addRow([]);
-  worksheet.addRow([]);
-  worksheet.addRow(['Title', title]);
-  worksheet.addRow(['From', gte]);
-  worksheet.addRow(['To', lte]);
+    worksheet.addRow([]);
+    worksheet.addRow([]);
+    worksheet.addRow(['Title', title]);
+    worksheet.addRow(['From', gte]);
+    worksheet.addRow(['To', lte]);
 
-  await workbook.xlsx.writeFile(filePath);
+    await workbook.xlsx.writeFile(filePath);
+    return true;
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
 }
 
 export function getColumns(cols) {
@@ -232,41 +238,41 @@ export async function start(report: Report, client) {
 
     let uniqueName = uuidv4();
     const filePath = path.join(dirPath, `/${uniqueName}.xlsx`);
-    createExcel(report.title, gte, lte, dataList, filePath, columns);
-
-    var mail = nodemailer.createTransport({
-      service: MAILING_SERVICE,
-      auth: {
-        user: MAILING_USER,
-        pass: MAILING_PASS,
-      },
-    });
-
-    var mailOptions = {
-      from: MAILING_USER,
-      to: report.receiver,
-      subject: 'Scheduled Report - ' + report.title,
-      html: getMailContent(report.title),
-      attachments: [
-        {
-          filename: report.title + '.xlsx',
-          path: filePath,
+    if (createExcel(report.title, gte, lte, dataList, filePath, columns)) {
+      var mail = nodemailer.createTransport({
+        service: MAILING_SERVICE,
+        auth: {
+          user: MAILING_USER,
+          pass: MAILING_PASS,
         },
-      ],
-    };
+      });
 
-    await mail.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log('Email sent: ' + info.response);
-        // delete the file
-        fs.unlink(filePath, function (err) {
-          if (err) return console.log(err);
-          console.log('file deleted successfully');
-        });
-      }
-    });
+      var mailOptions = {
+        from: MAILING_USER,
+        to: report.receiver,
+        subject: 'Scheduled Report - ' + report.title,
+        html: getMailContent(report.title),
+        attachments: [
+          {
+            filename: report.title + '.xlsx',
+            path: filePath,
+          },
+        ],
+      };
+
+      await mail.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+          // delete the file
+          fs.unlink(filePath, function (err) {
+            if (err) return console.log(err);
+            console.log('file deleted successfully');
+          });
+        }
+      });
+    }
   } catch (e) {
     console.log(e);
   }
